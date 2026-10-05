@@ -33,7 +33,7 @@ The operator inbox provides conversation search and filtering, visitor presence,
 - **Atomic operator takeover** — PostgreSQL row locks prevent Ren and a human operator from owning the same turn concurrently.
 - **Protected operator inbox** — admin credentials are exchanged for a signed HttpOnly session rather than stored in browser state.
 - **Knowledge operations** — administrators can ingest, replace, inspect, retry, and delete Markdown, text, and text-based PDF documents.
-- **Provider isolation** — deterministic providers support repeatable tests; live adapters connect Groq, Pinecone, Hugging Face embeddings, and Jina or a local reranker.
+- **Provider isolation** — deterministic providers support repeatable tests; live adapters connect Groq, Cloudflare BGE embeddings, Pinecone, and Jina or an optional local reranker.
 - **Fail-closed production configuration** — missing credentials or unsafe defaults fail validation instead of silently producing ungrounded answers.
 
 ## Architecture
@@ -57,7 +57,7 @@ flowchart LR
     Ingest --> DB
 
     Chat --> Groq[Groq LLM]
-    Chat --> Embed[Hugging Face embeddings]
+    Chat --> Embed[Cloudflare Workers AI / BGE]
     Embed --> Pinecone[(Pinecone index)]
     Pinecone --> Rerank[Jina or local reranker]
     Rerank --> Chat
@@ -89,7 +89,7 @@ Provider clients and local models are initialized lazily. Importing the applicat
 | Persistence | PostgreSQL, SQLAlchemy 2, asyncpg | Conversations, messages, sessions, handoffs, knowledge metadata, and idempotency |
 | Schema management | Alembic | Versioned PostgreSQL migrations |
 | Language model | Groq | Routing, standalone retrieval queries, summaries, and grounded responses |
-| Embeddings | Sentence Transformers / BGE | Normalized semantic vectors |
+| Embeddings | Cloudflare Workers AI / BGE | Hosted, normalized semantic vectors without local model memory |
 | Vector search | Pinecone | Namespaced knowledge retrieval |
 | Reranking | Jina AI or local CrossEncoder | Final evidence ordering |
 | Testing | Pytest, Vitest, Testing Library | Backend integration and frontend component coverage |
@@ -150,10 +150,16 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 ```
 
-For live Groq, Pinecone, and embedding providers:
+For lightweight live Groq, Cloudflare embeddings, Pinecone, and Jina providers:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements-live.txt
+```
+
+To run the embedding model or reranker locally instead, install the optional ML stack:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-local-ml.txt
 ```
 
 ### 3. Prepare PostgreSQL
@@ -208,6 +214,7 @@ Live mode requires:
 
 - `PROVIDER_MODE=live`
 - A Groq API key
+- A Cloudflare account ID and Workers AI API token when `EMBEDDING_PROVIDER=cloudflare`
 - A Pinecone API key
 - An existing Pinecone index matching `EMBEDDING_DIMENSION`
 - A Jina API key when `RERANKER_PROVIDER=jina`
@@ -225,7 +232,7 @@ All supported settings are documented in [`.env.example`](.env.example). The pri
 | Database | `DATABASE_URL` |
 | Security | `ADMIN_API_KEY`, `CONVERSATION_TOKEN_PEPPER`, session and cookie settings |
 | LLM | `LLM_PROVIDER`, `LLM_MODEL`, `GROQ_API_KEY` |
-| Embeddings | `EMBEDDING_PROVIDER`, `EMBEDDING_MODEL`, `EMBEDDING_DIMENSION` |
+| Embeddings | `EMBEDDING_PROVIDER`, Cloudflare credentials and model, `EMBEDDING_DIMENSION` |
 | Retrieval | `PINECONE_API_KEY`, `VECTOR_INDEX_NAME`, `VECTOR_COLLECTION`, candidate and top-k limits |
 | Reranking | `RERANKER_PROVIDER`, local/Jina model settings, `JINA_API_KEY` |
 | Memory | History budget and summary trigger settings |

@@ -79,10 +79,20 @@ async def ready(request: Request, session: SessionDep) -> ReadinessOutput:
         knowledge = "unavailable"
     settings = request.app.state.settings
     providers = "configured"
-    if settings.provider_mode == "live" and (
-        not settings.groq_api_key or not settings.pinecone_api_key
-    ):
-        providers = "misconfigured"
+    if settings.provider_mode == "live":
+        missing_provider_config = (
+            not settings.groq_api_key or not settings.pinecone_api_key
+        )
+        if settings.embedding_provider == "cloudflare":
+            missing_provider_config = missing_provider_config or not (
+                settings.cloudflare_account_id and settings.cloudflare_api_token
+            )
+        if settings.reranker_provider == "jina":
+            missing_provider_config = (
+                missing_provider_config or not settings.jina_api_key
+            )
+        if missing_provider_config:
+            providers = "misconfigured"
     overall = (
         "ready"
         if database_status == "ready" and providers == "configured"

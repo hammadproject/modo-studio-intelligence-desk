@@ -105,11 +105,14 @@ class Settings(BaseSettings):
     llm_provider: str = "groq"
     llm_model: str = "openai/gpt-oss-120b"
     groq_api_key: str | None = None
-    embedding_provider: str = "huggingface"
+    embedding_provider: str = "cloudflare"
     embedding_model: str = "BAAI/bge-base-en-v1.5"
     embedding_dimension: int = 768
+    cloudflare_account_id: str | None = None
+    cloudflare_api_token: str | None = None
+    cloudflare_embedding_model: str = "@cf/baai/bge-base-en-v1.5"
     vector_provider: str = "pinecone"
-    reranker_provider: str = "local"
+    reranker_provider: str = "jina"
     reranker_model: str = "cross-encoder/ms-marco-MiniLM-L6-v2"
     jina_api_key: str | None = None
     jina_reranker_model: str = "jina-reranker-v3.5"
@@ -160,7 +163,7 @@ class Settings(BaseSettings):
         ]
 
     @model_validator(mode="after")
-    def validate_configuration(self) -> "Settings":
+    def validate_configuration(self) -> Settings:
         if self.chunk_overlap_chars >= self.chunk_size_chars:
             raise ValueError(
                 "CHUNK_OVERLAP_CHARS must be smaller than CHUNK_SIZE_CHARS"
@@ -176,6 +179,13 @@ class Settings(BaseSettings):
                 "GROQ_API_KEY": self.groq_api_key,
                 "PINECONE_API_KEY": self.pinecone_api_key,
             }
+            if self.embedding_provider == "cloudflare":
+                required.update(
+                    {
+                        "CLOUDFLARE_ACCOUNT_ID": self.cloudflare_account_id,
+                        "CLOUDFLARE_API_TOKEN": self.cloudflare_api_token,
+                    }
+                )
             if self.reranker_provider == "jina":
                 required["JINA_API_KEY"] = self.jina_api_key
             missing = [name for name, value in required.items() if not value]

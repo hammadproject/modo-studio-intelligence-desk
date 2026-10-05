@@ -3,7 +3,7 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 
-ARG REQUIREMENTS_FILE=requirements.txt
+ARG REQUIREMENTS_FILE=requirements-live.txt
 COPY requirements*.txt ./
 RUN pip install --no-cache-dir -r ${REQUIREMENTS_FILE}
 

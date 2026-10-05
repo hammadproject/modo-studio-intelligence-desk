@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import math
 from typing import Any
 
 import httpx
@@ -10,7 +11,6 @@ import httpx
 from app.core.config import Settings
 from app.core.errors import ProviderUnavailableError
 from app.providers.base import ChatTurn, RetrievalMatch, RouteDecision, VectorRecord
-
 
 logger = logging.getLogger(__name__)
 
@@ -226,6 +226,80 @@ class HuggingFaceEmbeddings:
         model = await asyncio.to_thread(self._get_model)
         result = await asyncio.to_thread(model.encode, texts, normalize_embeddings=True)
         return result.tolist()
+
+    async def embed_query(self, text: str) -> list[float]:
+        return (await self.embed_documents([text]))[0]
+
+
+class CloudflareEmbeddings:
+    mode = "live"
+
+    def __init__(self, settings: Settings):
+        self.settings = settings
+        self.dimension = settings.embedding_dimension
+        self.model_name = settings.cloudflare_embedding_model
+        self._client: httpx.AsyncClient | None = None
+
+    @property
+    def client(self) -> httpx.AsyncClient:
+        if self._client is None:
+            account_id = self.settings.cloudflare_account_id
+            self._client = httpx.AsyncClient(
+                base_url=(
+                    f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run"
+                ),
+                headers={
+                    "Authorization": (f"Bearer {self.settings.cloudflare_api_token}")
+                },
+                timeout=self.settings.provider_timeout_seconds,
+            )
+        return self._client
+
+    def _normalize(self, values: list[float]) -> list[float]:
+        if len(values) != self.dimension:
+            raise ValueError(
+                "Embedding dimension mismatch: "
+                f"configured {self.dimension}, provider returned {len(values)}"
+            )
+        magnitude = math.sqrt(sum(value * value for value in values))
+        if not math.isfinite(magnitude) or magnitude == 0:
+            raise ValueError("Embedding provider returned an invalid vector")
+        return [value / magnitude for value in values]
+
+    async def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        if not texts:
+            return []
+        payload = {
+            "text": texts,
+            # The existing BGE index was created by SentenceTransformer, whose
+            # model configuration uses CLS pooling. Mean pooling is incompatible.
+            "pooling": "cls",
+        }
+        last_error: Exception | None = None
+        for attempt in range(self.settings.provider_max_retries + 1):
+            try:
+                response = await self.client.post(f"/{self.model_name}", json=payload)
+                response.raise_for_status()
+                result = response.json()["result"]
+                vectors = result["data"]
+                if len(vectors) != len(texts):
+                    raise ValueError("Embedding provider returned an invalid batch")
+                return [
+                    self._normalize([float(value) for value in vector])
+                    for vector in vectors
+                ]
+            except (
+                httpx.HTTPError,
+                KeyError,
+                TypeError,
+                ValueError,
+            ) as exc:
+                last_error = exc
+                if attempt < self.settings.provider_max_retries:
+                    await asyncio.sleep(0.25 * (2**attempt))
+        raise ProviderUnavailableError(
+            "Embedding provider request failed"
+        ) from last_error
 
     async def embed_query(self, text: str) -> list[float]:
         return (await self.embed_documents([text]))[0]

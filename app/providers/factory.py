@@ -16,6 +16,7 @@ from app.providers.deterministic import (
     DeterministicVectorStore,
 )
 from app.providers.live import (
+    CloudflareEmbeddings,
     GroqLLM,
     HuggingFaceEmbeddings,
     JinaReranker,
@@ -42,7 +43,7 @@ def build_providers(settings: Settings) -> ProviderBundle:
         )
     if (
         settings.llm_provider != "groq"
-        or settings.embedding_provider != "huggingface"
+        or settings.embedding_provider not in {"cloudflare", "huggingface"}
         or settings.vector_provider != "pinecone"
         or settings.reranker_provider not in {"local", "jina"}
     ):
@@ -52,9 +53,14 @@ def build_providers(settings: Settings) -> ProviderBundle:
         if settings.reranker_provider == "jina"
         else LocalCrossEncoderReranker(settings)
     )
+    embeddings = (
+        CloudflareEmbeddings(settings)
+        if settings.embedding_provider == "cloudflare"
+        else HuggingFaceEmbeddings(settings)
+    )
     return ProviderBundle(
         GroqLLM(settings),
-        HuggingFaceEmbeddings(settings),
+        embeddings,
         PineconeVectorStore(settings),
         reranker,
     )
