@@ -26,6 +26,7 @@ class AssistantResponseConfig(BaseModel):
 class AssistantGeneralBehaviorConfig(BaseModel):
     unknown_business_detail: AssistantResponseConfig
     ambiguous_message: AssistantResponseConfig
+    off_topic: AssistantResponseConfig
 
 
 class AssistantIntentConfig(BaseModel):
@@ -127,7 +128,7 @@ class Settings(BaseSettings):
 
     history_token_budget: int = Field(default=1800, ge=128)
     summary_trigger_tokens: int = Field(default=2400, ge=256)
-    max_message_chars: int = Field(default=8000, ge=1)
+    max_message_chars: int = Field(default=1500, ge=1)
     max_upload_bytes: int = Field(default=5_000_000, ge=1024)
     chunk_size_chars: int = Field(default=1200, ge=100)
     chunk_overlap_chars: int = Field(default=150, ge=0)

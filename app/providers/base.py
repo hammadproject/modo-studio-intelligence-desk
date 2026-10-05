@@ -13,7 +13,7 @@ class ChatTurn:
 
 @dataclass(slots=True)
 class RouteDecision:
-    route: Literal["knowledge", "clarification", "handoff", "action"]
+    route: Literal["knowledge", "clarification", "handoff", "action", "off_topic"]
     action_name: str | None = None
     reason: str = ""
 

@@ -66,7 +66,13 @@ class ChatOutput(BaseModel):
     assistant_message_id: uuid.UUID | None = None
     answer: str
     route: Literal[
-        "knowledge", "general", "clarification", "handoff", "action", "human"
+        "knowledge",
+        "general",
+        "clarification",
+        "handoff",
+        "action",
+        "off_topic",
+        "human",
     ]
     sources: list[SourceCitation] = Field(default_factory=list)
     handoff_status: str | None = None
@@ -131,7 +137,7 @@ class AdminSessionOutput(BaseModel):
 
 
 class AdminReplyInput(BaseModel):
-    message: str = Field(min_length=1, max_length=8000)
+    message: str = Field(min_length=1, max_length=1500)
 
 
 class AdminConversationSummary(BaseModel):

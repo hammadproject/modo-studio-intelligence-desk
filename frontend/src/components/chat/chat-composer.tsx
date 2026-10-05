@@ -38,7 +38,7 @@ export function ChatComposer({
         onKeyDown={handleKeyDown}
         placeholder="Ask about services, pricing, or process…"
         rows={1}
-        maxLength={8000}
+        maxLength={1500}
         disabled={disabled}
       />
       <button type="submit" disabled={disabled || !value.trim()} aria-label="Send message">

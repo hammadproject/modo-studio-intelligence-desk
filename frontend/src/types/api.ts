@@ -1,5 +1,5 @@
 export type ProviderMode = 'live' | 'deterministic'
-export type ChatRoute = 'knowledge' | 'general' | 'clarification' | 'handoff' | 'action' | 'human'
+export type ChatRoute = 'knowledge' | 'general' | 'clarification' | 'handoff' | 'action' | 'off_topic' | 'human'
 
 export interface ConversationCreated {
   conversation_id: string
