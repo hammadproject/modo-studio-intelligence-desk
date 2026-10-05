@@ -16,6 +16,16 @@ Open `http://localhost:5173`. `VITE_API_BASE_URL` defaults to `http://localhost:
 
 The backend development CORS configuration permits `http://localhost:5173` and `http://127.0.0.1:5173`. Use an explicit deployed origin in production rather than a wildcard.
 
+## Deploy on Vercel
+
+Set the Vercel project root directory to `frontend` and add this public build variable:
+
+```text
+VITE_API_BASE_URL=/
+```
+
+The included `vercel.json` proxies `/api/*` and `/health/*` to the deployed Render backend. Keeping browser requests on the Vercel origin allows the visitor and admin HttpOnly cookies to work without third-party cookie access. Backend secrets belong only on Render.
+
 ## Commands
 
 ```powershell

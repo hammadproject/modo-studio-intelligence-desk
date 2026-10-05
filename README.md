@@ -202,6 +202,8 @@ Open:
 
 The frontend derives its default API hostname from the page hostname. Set `VITE_API_BASE_URL` only when the API is hosted elsewhere; never place server credentials in a `VITE_` variable.
 
+For the hosted Vercel frontend, use `VITE_API_BASE_URL=/`. The frontend's Vercel configuration proxies API and health requests to the Render backend on the same browser origin, preserving secure visitor and operator sessions.
+
 ## Provider modes
 
 ### Deterministic mode
