@@ -1,0 +1,16 @@
+services:
+  test-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: chirpy_test
+      POSTGRES_PASSWORD: chirpy_test
+      POSTGRES_DB: chirpy_test
+    ports:
+      - "55432:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chirpy_test -d chirpy_test"]
+      interval: 1s
+      timeout: 3s
+      retries: 30

@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: chirpy
+      POSTGRES_PASSWORD: chirpy
+      POSTGRES_DB: chirpy
+    ports:
+      - "5432:5432"
+    volumes:
+      - chirpy_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chirpy -d chirpy"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://chirpy:chirpy@db:5432/chirpy
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  chirpy_postgres_data:
