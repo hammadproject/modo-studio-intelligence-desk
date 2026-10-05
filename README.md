@@ -34,7 +34,7 @@ The operator inbox provides conversation search and filtering, visitor presence,
 - **Protected operator inbox** — admin credentials are exchanged for a signed HttpOnly session rather than stored in browser state.
 - **Knowledge operations** — administrators can ingest, replace, inspect, retry, and delete Markdown, text, and text-based PDF documents.
 - **Provider isolation** — deterministic providers support repeatable tests; live adapters connect Groq, Pinecone, Hugging Face embeddings, and Jina or a local reranker.
-- **Fail-closed production configuration** — missing credentials or unsafe defaults fail validation instead of silently producing mock answers.
+- **Fail-closed production configuration** — missing credentials or unsafe defaults fail validation instead of silently producing ungrounded answers.
 
 ## Architecture
 
