@@ -13,7 +13,13 @@ import {
 import { ApiError, modoDeskApi } from '../lib/api'
 import { playReceiveSound, playSendSound } from '../lib/chat-sounds'
 import { plainTextPreview } from '../lib/chat-text'
-import type { HandoffInput, ReadinessOutput, SourceCitation } from '../types/api'
+import type {
+  ConversationCreated,
+  HandoffInput,
+  ReadinessOutput,
+  SourceCitation,
+  VisitorConversationSummary,
+} from '../types/api'
 
 const ACTIVE_STORAGE_KEY = 'modo.activeConversation.v2'
 const LEGACY_ACTIVE_KEY = 'modo.chirpy.session.v1'
@@ -188,10 +194,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
   }, [replaceSession, updateConversations, upsertConversation])
 
-  const refreshConversationList = useCallback(async () => {
+  const refreshConversationList = useCallback(async (): Promise<ConversationSummary[]> => {
     try {
       const page = await modoDeskApi.visitorConversations()
-      const next = page.items.map((item) => ({
+      const next = page.items.map((item: VisitorConversationSummary) => ({
         conversationId: item.conversation_id,
         title: 'Ren',
         preview: threadPreview(item.preview),
@@ -200,18 +206,23 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setConversations(next)
       return next
     } catch (caught) {
-      if (caught instanceof ApiError && caught.status === 401) {
-        setConversations([])
-        return []
+      if (caught instanceof ApiError) {
+        if (caught.status === 401) {
+          setConversations([])
+          return []
+        }
       }
       throw caught
     }
   }, [])
 
-  const ensureSession = useCallback(async () => {
-    if (sessionRef.current) return sessionRef.current
-    if (!creatingSession.current) {
-      creatingSession.current = modoDeskApi.createConversation().then((created) => {
+  const ensureSession = useCallback(async (): Promise<ChatSession> => {
+    const existing = sessionRef.current
+    if (existing) return existing
+
+    let pending = creatingSession.current
+    if (!pending) {
+      pending = modoDeskApi.createConversation().then((created: ConversationCreated) => {
         const next = { conversationId: created.conversation_id }
         replaceSession(next)
         upsertConversation(next, { updatedAt: created.created_at })
@@ -219,8 +230,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       }).finally(() => {
         creatingSession.current = null
       })
+      creatingSession.current = pending
     }
-    return creatingSession.current
+    return pending
   }, [replaceSession, upsertConversation])
 
   const refreshHealth = useCallback(async () => {
@@ -314,7 +326,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         active.conversationId,
         requestId,
         content,
-        (delta) => {
+        (delta: string) => {
           if (!receiveSoundPlayed) {
             receiveSoundPlayed = true
             playReceiveSound()
