@@ -1,6 +1,5 @@
 # Modo Studio Intelligence Desk
 
-![CI](https://github.com/hammadproject/modo-studio-intelligence-desk/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=111111)
@@ -347,10 +346,6 @@ GitHub Actions runs the same backend checks against an isolated PostgreSQL 16 se
 - Add production observability and distributed rate limiting
 - Expand knowledge-source connectors with explicit review and approval workflows
 
-## Attribution and license
-
-This project began from [`Pratham1603/sezzle-ai-customer-support-agent`](https://github.com/Pratham1603/sezzle-ai-customer-support-agent), upstream revision `1852c6c070d312f3b4e31fd924b5d41f320d72d4`. The upstream MIT license and copyright notice are preserved in [`LICENSE`](LICENSE).
-
-The active Modo Studio application, business configuration, knowledge, React experience, persistent conversation model, RAG pipeline, and operator workflow are project-specific implementations.
+## License
 
 Released under the [MIT License](LICENSE).
